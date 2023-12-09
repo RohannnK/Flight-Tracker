@@ -30,7 +30,9 @@ def fetch_real_time_flights(api_key, limit=100, offset=0):
     flights_in_air = []
 
     for flight in api_response.get('data', []):
-        if not flight.get('live', {}).get('is_ground', True):
+        # Check if 'live' data is available and if the flight is not on the ground
+        live_data = flight.get('live')
+        if live_data and not live_data.get('is_ground', True):
             flight_info = {
                 'airline': flight.get('airline', {}).get('name'),
                 'flight_number': flight.get('flight', {}).get('iata'),
@@ -42,6 +44,7 @@ def fetch_real_time_flights(api_key, limit=100, offset=0):
             flights_in_air.append(flight_info)
 
     return flights_in_air
+
 
 def process_flight_data(flight_data):
     """
