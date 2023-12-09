@@ -37,7 +37,7 @@ def fetch_real_time_flights(api_key):
     # Making the API request
     api_result = requests.get('http://api.aviationstack.com/v1/flights', params)
     api_response = api_result.json()
-
+    print(api_response)
     # List to hold flight information
     flights_in_air = []
 
