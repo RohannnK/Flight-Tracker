@@ -1,4 +1,5 @@
 import requests
+from .classes import Flight  # Import the Flight class from your classes module
 
 def fetch_real_time_flights(api_key):
     """
@@ -37,9 +38,6 @@ def fetch_real_time_flights(api_key):
     flights_in_air = []
 
     for flight in api_response.get('results', []):
-        #This code is adapted from the API interaction guide from AviationStack
-        #This should still be assessed as my work, it's just necessary
-        #So I can interact with the API as I should
         if not flight['live']['is_ground']:
             flight_info = {
                 'airline': flight['airline']['name'],
@@ -52,3 +50,36 @@ def fetch_real_time_flights(api_key):
             flights_in_air.append(flight_info)
 
     return flights_in_air
+
+def process_flight_data(flight_data):
+    """
+    Processes raw flight data from the AviationStack API.
+
+    Parameters
+    ----------
+    flight_data : list of dict
+        A list of dictionaries, each representing a flight's data.
+
+    Returns
+    -------
+    list of Flight
+        A list of Flight objects with processed data.
+    """
+
+    processed_flights = []
+
+    for flight in flight_data:
+        # Extract relevant information
+        flight_number = flight.get('flight_number')
+        airline = flight.get('airline')
+        departure_airport = flight.get('departure')
+        departure_code = flight.get('departure_code')
+        arrival_airport = flight.get('arrival')
+        arrival_code = flight.get('arrival_code')
+
+        # Create a Flight object
+        processed_flight = Flight(flight_number, airline, departure_airport, departure_code, arrival_airport, arrival_code)
+        
+        processed_flights.append(processed_flight)
+
+    return processed_flights
