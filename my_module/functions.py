@@ -32,7 +32,7 @@ def fetch_real_time_flights(api_key):
     ...     print(flight)
     """
     params = {'access_key': api_key}
-    api_result = requests.get('https://api.aviationstack.com/v1/flights', params)
+    api_result = requests.get('http://api.aviationstack.com/v1/flights', params)
     api_response = api_result.json()
     print(api_response)
 

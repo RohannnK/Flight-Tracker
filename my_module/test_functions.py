@@ -49,7 +49,7 @@ def test_fetch_and_process_specific_flight():
     }
 
     with requests_mock.Mocker() as m:
-        m.get("https://api.aviationstack.com/v1/flights", json=mock_response)
+        m.get("http://api.aviationstack.com/v1/flights", json=mock_response)
         
         # Fetch and process the flight data
         flights = fetch_real_time_flights('1b72576d264f229fe85c9a9f8ddda862')
@@ -70,7 +70,7 @@ def test_fetch_real_time_flights_empty_response():
     Test the behavior of the fetch_real_time_flights function when the API returns an empty response.
     """
     with requests_mock.Mocker() as m:
-        m.get("https://api.aviationstack.com/v1/flights", json={"data": []})
+        m.get("http://api.aviationstack.com/v1/flights", json={"data": []})
         flights = fetch_real_time_flights('test_api_key')
         
         # Assert that the function returns an empty list
