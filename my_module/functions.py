@@ -1,69 +1,73 @@
 import requests
-from .classes import Flight  # Import the Flight class from classes module
+from .classes import Flight  
 
-def fetch_real_time_flights(api_key):
+def fetch_real_time_flights(api_key, limit=100, offset=0):
     """
     Fetch real-time flight data from the AviationStack API.
-
-    This function sends a request to the AviationStack API to retrieve
-    information about flights that are currently in the air.
 
     Parameters
     ----------
     api_key : str
         The API key required to authenticate with the AviationStack API.
+    limit : int, optional
+        The number of results to return per request (default is 100).
+    offset : int, optional
+        The offset for pagination (default is 0).
 
     Returns
     -------
     list of dict
         A list of dictionaries, each containing information about a flight.
-        Each dictionary includes the airline name, flight number, departure
-        and arrival airports, and their respective IATA codes.
-
-    Raises
-    ------
-    requests.exceptions.RequestException
-        If the request to the AviationStack API fails.
-
-    Examples
-    --------
-    >>> flights = fetch_real_time_flights('your_api_key_here')
-    >>> for flight in flights:
-    ...     print(flight)
     """
-    # Parameters for the API request
-    params = {'access_key': api_key}
-    
-    # Making the API request
+    params = {
+        'access_key': api_key,
+        'limit': limit,
+        'offset': offset
+    }
     api_result = requests.get('http://api.aviationstack.com/v1/flights', params)
     api_response = api_result.json()
-    print("API Response:", api_response)
 
-    # List to hold flight information
     flights_in_air = []
 
-    # Processing each flight in the response
-    for flight in api_response.get('results', []):
-        if not flight['live']['is_ground']:
+    for flight in api_response.get('data', []):
+        if not flight.get('live', {}).get('is_ground', True):
             flight_info = {
-                'airline': flight['airline']['name'],
-                'flight_number': flight['flight']['iata'],
-                'departure': flight['departure']['airport'],
-                'departure_code': flight['departure']['iata'],
-                'arrival': flight['arrival']['airport'],
-                'arrival_code': flight['arrival']['iata']
+                'airline': flight.get('airline', {}).get('name'),
+                'flight_number': flight.get('flight', {}).get('iata'),
+                'departure_airport': flight.get('departure', {}).get('airport'),
+                'departure_iata': flight.get('departure', {}).get('iata'),
+                'arrival_airport': flight.get('arrival', {}).get('airport'),
+                'arrival_iata': flight.get('arrival', {}).get('iata')
             }
-            print("Flight Info:", flight_info)
             flights_in_air.append(flight_info)
-    print("Flights in Air:", flights_in_air)
+
     return flights_in_air
 
 def process_flight_data(flight_data):
+    """
+    Processes raw flight data into Flight objects.
+
+    Parameters
+    ----------
+    flight_data : list of dict
+        A list of dictionaries, each representing a flight's data.
+
+    Returns
+    -------
+    list of Flight
+        A list of Flight objects with processed data.
+    """
     processed_flights = []
 
     for flight in flight_data:
-        # Create a Flight object with dummy values for testing
-        test_flight = Flight("Test123", "TestAirline", "TestDeparture", "TD", "TestArrival", "TA")
-        processed_flights.append(test_flight)
+        processed_flight = Flight(
+            flight_number=flight['flight_number'],
+            airline=flight['airline'],
+            departure_airport=flight['departure_airport'],
+            departure_iata=flight['departure_iata'],
+            arrival_airport=flight['arrival_airport'],
+            arrival_iata=flight['arrival_iata']
+        )
+        processed_flights.append(processed_flight)
 
     return processed_flights
