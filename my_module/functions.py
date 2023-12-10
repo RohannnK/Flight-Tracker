@@ -1,5 +1,6 @@
 import requests
 from .classes import Flight  
+from datetime import datetime
 
 def fetch_real_time_flights(api_key, limit=100, offset=0):
     """
@@ -57,21 +58,41 @@ def process_flight_data(flight_data):
         list: A list of Flight objects with processed data.
     """
     processed_flights = []
-    
+
     for flight_info in flight_data:
         flight = flight_info.get("flight", {})
         airline = flight_info.get("airline", {})
         departure = flight_info.get("departure", {})
         arrival = flight_info.get("arrival", {})
-        
+
+        flight_number = flight.get("number", "")
+        airline_name = airline.get("name", "")
+        departure_airport = departure.get("airport", "")
+        departure_code = departure.get("iata", "")
+        arrival_airport = arrival.get("airport", "")
+        arrival_code = arrival.get("iata", "")
+
+        # Check for the existence of departure and arrival times
+        if "scheduled" in departure:
+            departure_time = datetime.strptime(departure["scheduled"], "%Y-%m-%dT%H:%M:%S+00:00")
+        else:
+            departure_time = None
+
+        if "scheduled" in arrival:
+            arrival_time = datetime.strptime(arrival["scheduled"], "%Y-%m-%dT%H:%M:%S+00:00")
+        else:
+            arrival_time = None
+
         processed_flight = Flight(
-            flight_number=flight.get("number", ""),
-            airline=airline.get("name", ""),
-            departure_airport=departure.get("airport", ""),
-            departure_iata=departure.get("iata", ""),
-            arrival_airport=arrival.get("airport", ""),
-            arrival_iata=arrival.get("iata", "")
+            flight_number=flight_number,
+            airline=airline_name,
+            departure_airport=departure_airport,
+            departure_iata=departure_code,
+            arrival_airport=arrival_airport,
+            arrival_iata=arrival_code,
+            departure_time=departure_time,
+            arrival_time=arrival_time
         )
         processed_flights.append(processed_flight)
-    
+
     return processed_flights
