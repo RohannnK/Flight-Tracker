@@ -1,6 +1,7 @@
 import requests
 from .classes import Flight  
 from datetime import datetime
+import pandas as pd
 
 def fetch_real_time_flights(api_key, limit=100, offset=0):
     """
@@ -49,32 +50,58 @@ def fetch_real_time_flights(api_key, limit=100, offset=0):
 
 def process_flight_data(flight_data):
     """
-    Processes raw flight data into Flight objects.
+    Processes raw flight data from AviationStack API into Flight objects using pandas.
 
-    Args:
-        flight_data (list): A list of raw flight data.
+    Parameters
+    ----------
+    flight_data_list : list
+        A list of dictionaries, each a flight record from the AviationStack API.
 
-    Returns:
-        list: A list of Flight objects with processed data.
+    Returns
+    -------
+    list
+        A list of Flight objects with processed data.
     """
-    processed_flights = []
 
-    for flight_info in flight_data:
-        flight = flight_info.get("flight", flight_info)
-        airline_info = flight_info.get("airline", flight_info.get("airline_name", {}))
-        airline = airline_info.get("name", "")
-        departure_info = flight_info.get("departure", {})
-        arrival_info = flight_info.get("arrival", {})
+    # Convert the list of dictionaries to a DataFrame
+    df = pd.DataFrame(flight_data)
 
-        processed_flight = Flight(
-            flight_number=flight.get("number", ""),
-            airline=airline,
-            departure_airport=departure_info.get("airport", ""),
-            departure_iata=departure_info.get("iata", ""),
-            arrival_airport=arrival_info.get("airport", ""),
-            arrival_iata=arrival_info.get("iata", "")
+    # Normalize the nested dictionaries into separate columns
+    df_flight = pd.json_normalize(df['flight']).add_prefix('flight_')
+    df_airline = pd.json_normalize(df['airline']).add_prefix('airline_')
+    df_departure = pd.json_normalize(df['departure']).add_prefix('departure_')
+    df_arrival = pd.json_normalize(df['arrival']).add_prefix('arrival_')
+
+    # Join the normalized data back into the main DataFrame
+    df = df.join([df_flight, df_airline, df_departure, df_arrival])
+
+    # Drop the original nested structure columns
+    df = df.drop(columns=['flight', 'airline', 'departure', 'arrival'])
+
+    # Convert the datetime strings to datetime objects
+    df['departure_actual'] = pd.to_datetime(df['departure_actual'], errors='coerce')
+    df['arrival_actual'] = pd.to_datetime(df['arrival_actual'], errors='coerce')
+
+    # Drop any rows where the required data is missing
+    required_columns = [
+        'flight_iata', 'airline_name', 'departure_airport', 'departure_iata', 
+        'arrival_airport', 'arrival_iata', 'departure_actual', 'arrival_actual'
+    ]
+    df = df.dropna(subset=required_columns)
+
+    # Create Flight objects from the DataFrame rows
+    processed_flights = [
+        Flight(
+            flight_number=row['flight_iata'],
+            airline=row['airline_name'],
+            departure=row['departure_airport'],
+            departure_code=row['departure_iata'],
+            arrival=row['arrival_airport'],
+            arrival_code=row['arrival_iata'],
+            departure_time=row['departure_actual'],
+            arrival_time=row['arrival_actual']
         )
-        processed_flights.append(processed_flight)
+        for _, row in df.iterrows()
+    ]
 
     return processed_flights
-
