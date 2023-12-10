@@ -26,7 +26,7 @@ def fetch_real_time_flights(api_key, limit=100, offset=0):
     }
     api_result = requests.get('http://api.aviationstack.com/v1/flights', params)
     api_response = api_result.json()
-
+    print(api_response)
     flights_in_air = []
 
     for flight in api_response.get('data', []):
@@ -42,7 +42,7 @@ def fetch_real_time_flights(api_key, limit=100, offset=0):
                 'arrival_iata': flight.get('arrival', {}).get('iata')
             }
             flights_in_air.append(flight_info)
-
+    print("Final Flights in Air:", flights_in_air)
     return flights_in_air
 
 
@@ -50,27 +50,28 @@ def process_flight_data(flight_data):
     """
     Processes raw flight data into Flight objects.
 
-    Parameters
-    ----------
-    flight_data : list of dict
-        A list of dictionaries, each representing a flight's data.
+    Args:
+        flight_data (list): A list of raw flight data.
 
-    Returns
-    -------
-    list of Flight
-        A list of Flight objects with processed data.
+    Returns:
+        list: A list of Flight objects with processed data.
     """
     processed_flights = []
-
-    for flight in flight_data:
+    
+    for flight_info in flight_data:
+        flight = flight_info.get("flight", {})
+        airline = flight_info.get("airline", {})
+        departure = flight_info.get("departure", {})
+        arrival = flight_info.get("arrival", {})
+        
         processed_flight = Flight(
-            flight_number=flight['flight_number'],
-            airline=flight['airline'],
-            departure_airport=flight['departure_airport'],
-            departure_iata=flight['departure_iata'],
-            arrival_airport=flight['arrival_airport'],
-            arrival_iata=flight['arrival_iata']
+            flight_number=flight.get("number", ""),
+            airline=airline.get("name", ""),
+            departure_airport=departure.get("airport", ""),
+            departure_iata=departure.get("iata", ""),
+            arrival_airport=arrival.get("airport", ""),
+            arrival_iata=arrival.get("iata", "")
         )
         processed_flights.append(processed_flight)
-
+    
     return processed_flights

@@ -124,3 +124,50 @@ def test_process_flight_data_extraction():
     assert flight.airline == "United Airlines"
     assert flight.departure == "Los Angeles International"
     assert flight.arrival == "Logan International"
+
+def test_process_flight_data_datetime_conversion():
+    """
+    Test if the process_flight_data function correctly converts datetime strings to datetime objects.
+    """
+    sample_api_response = {
+        "data": [
+            {
+                "flight": {
+                    "iata": "AA123",
+                    "icao": "AAL123",
+                    "number": "123"
+                },
+                "airline": {
+                    "name": "American Airlines",
+                    "iata": "AA",
+                    "icao": "AAL"
+                },
+                "departure": {
+                    "airport": "JFK Airport",
+                    "iata": "JFK",
+                    "icao": "KJFK",
+                    "scheduled": "2023-12-09T12:30:00+00:00",
+                    "estimated": "2023-12-09T12:35:00+00:00",
+                    "actual": "2023-12-09T12:34:00+00:00",
+                    "runway": "2023-12-09T12:34:00+00:00"
+                },
+                "arrival": {
+                    "airport": "Los Angeles International",
+                    "iata": "LAX",
+                    "icao": "KLAX",
+                    "scheduled": "2023-12-09T17:45:00+00:00",
+                    "estimated": "2023-12-09T17:45:00+00:00",
+                    "actual": "2023-12-09T17:45:00+00:00",
+                    "runway": "2023-12-09T17:45:00+00:00"
+                }
+            }
+        ]
+    }
+
+    processed_data = process_flight_data(sample_api_response["data"])
+
+    # Assert that the datetime strings are correctly converted to datetime objects
+    assert len(processed_data) == 1
+    flight = processed_data[0]
+    assert flight.departure_time == datetime(2023, 12, 9, 12, 34)
+    assert flight.arrival_time == datetime(2023, 12, 9, 17, 45)

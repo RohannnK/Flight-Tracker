@@ -16,6 +16,10 @@ class Flight:
         The arrival airport of the flight.
     arrival_code : str
         The IATA code of the arrival airport.
+    departure_time : datetime
+        The departure time of the flight.
+    arrival_time : datetime
+        The arrival time of the flight.
 
     Methods
     -------
@@ -24,7 +28,7 @@ class Flight:
         flight number, departure, and arrival airports.
     """
 
-    def __init__(self, flight_number, airline, departure, departure_code, arrival, arrival_code):
+    def __init__(self, flight_number, airline, departure, departure_code, arrival, arrival_code, departure_time, arrival_time):
         """
         Constructs all the necessary attributes for the Flight object.
 
@@ -42,6 +46,10 @@ class Flight:
                 The arrival airport of the flight.
             arrival_code : str
                 The IATA code of the arrival airport.
+            departure_time : datetime
+                The departure time of the flight.
+            arrival_time : datetime
+                The arrival time of the flight.
         """
         self.flight_number = flight_number
         self.airline = airline
@@ -49,6 +57,8 @@ class Flight:
         self.departure_code = departure_code
         self.arrival = arrival
         self.arrival_code = arrival_code
+        self.departure_time = departure_time
+        self.arrival_time = arrival_time
 
     def __str__(self):
         """
