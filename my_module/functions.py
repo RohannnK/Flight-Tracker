@@ -58,21 +58,23 @@ def process_flight_data(flight_data):
         list: A list of Flight objects with processed data.
     """
     processed_flights = []
-    
+
     for flight_info in flight_data:
-        flight = flight_info.get("flight", {})
-        airline = flight_info.get("airline", flight_info.get("airline_name", {}))  # Handle both cases
-        departure = flight_info.get("departure", {})
-        arrival = flight_info.get("arrival", {})
-        
+        flight = flight_info.get("flight", flight_info)
+        airline_info = flight_info.get("airline", flight_info.get("airline_name", {}))
+        airline = airline_info.get("name", "")
+        departure_info = flight_info.get("departure", {})
+        arrival_info = flight_info.get("arrival", {})
+
         processed_flight = Flight(
             flight_number=flight.get("number", ""),
-            airline=airline.get("name", ""),
-            departure_airport=departure.get("airport", ""),
-            departure_iata=departure.get("iata", ""),
-            arrival_airport=arrival.get("airport", ""),
-            arrival_iata=arrival.get("iata", "")
+            airline=airline,
+            departure_airport=departure_info.get("airport", ""),
+            departure_iata=departure_info.get("iata", ""),
+            arrival_airport=arrival_info.get("airport", ""),
+            arrival_iata=arrival_info.get("iata", "")
         )
         processed_flights.append(processed_flight)
-    
+
     return processed_flights
+
