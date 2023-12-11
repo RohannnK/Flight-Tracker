@@ -1,7 +1,8 @@
 import requests
-from .classes import Flight  
+from .classes import Flight
 from datetime import datetime
 import pandas as pd
+import collections.abc
 
 def fetch_real_time_flights(api_key, limit=100, offset=0):
     """
@@ -34,74 +35,70 @@ def fetch_real_time_flights(api_key, limit=100, offset=0):
     for flight in api_response.get('data', []):
         # Check if 'live' data is available and if the flight is not on the ground
         live_data = flight.get('live')
+
         if live_data and not live_data.get('is_ground', True):
+
             flight_info = {
                 'airline': flight.get('airline', {}).get('name'),
+
                 'flight_number': flight.get('flight', {}).get('iata'),
+
                 'departure_airport': flight.get('departure', {}).get('airport'),
+
                 'departure_iata': flight.get('departure', {}).get('iata'),
+
                 'arrival_airport': flight.get('arrival', {}).get('airport'),
+
                 'arrival_iata': flight.get('arrival', {}).get('iata')
             }
             flights_in_air.append(flight_info)
-    print("Final Flights in Air:", flights_in_air)
     return flights_in_air
 
-
-def process_flight_data(flight_data):
+def process_flight_data(flights_data):
     """
-    Processes raw flight data from AviationStack API into Flight objects using pandas.
+    Processes raw flight data into Flight objects.
 
     Parameters
     ----------
-    flight_data_list : list
-        A list of dictionaries, each a flight record from the AviationStack API.
+    flights_data : list
+        A list of dictionaries, each containing information about a flight.
 
     Returns
     -------
     list
         A list of Flight objects with processed data.
     """
+    processed_flights = []
 
-    # Convert the list of dictionaries to a DataFrame
-    df = pd.DataFrame(flight_data)
+    for flight_info in flights_data:
+        # Extract data for each flight
+        flight_details = flight_info.get('flight', {})
 
-    # Normalize the nested dictionaries into separate columns
-    df_flight = pd.json_normalize(df['flight']).add_prefix('flight_')
-    df_airline = pd.json_normalize(df['airline']).add_prefix('airline_')
-    df_departure = pd.json_normalize(df['departure']).add_prefix('departure_')
-    df_arrival = pd.json_normalize(df['arrival']).add_prefix('arrival_')
+        airline_details = flight_info.get('airline', {})
 
-    # Join the normalized data back into the main DataFrame
-    df = df.join([df_flight, df_airline, df_departure, df_arrival])
+        departure_details = flight_info.get('departure', {})
 
-    # Drop the original nested structure columns
-    df = df.drop(columns=['flight', 'airline', 'departure', 'arrival'])
+        arrival_details = flight_info.get('arrival', {})
 
-    # Convert the datetime strings to datetime objects
-    df['departure_actual'] = pd.to_datetime(df['departure_actual'], errors='coerce')
-    df['arrival_actual'] = pd.to_datetime(df['arrival_actual'], errors='coerce')
+        # Create a Flight object
+        flight = Flight(
+            flight_number=flight_details.get('iata'),
 
-    # Drop any rows where the required data is missing
-    required_columns = [
-        'flight_iata', 'airline_name', 'departure_airport', 'departure_iata', 
-        'arrival_airport', 'arrival_iata', 'departure_actual', 'arrival_actual'
-    ]
-    df = df.dropna(subset=required_columns)
+            airline=airline_details.get('name'),
 
-    # Create Flight objects from the DataFrame rows
-    processed_flights = [
-        Flight(
-            flight_number=row['flight_iata'],
-            airline=row['airline_name'],
-            departure=row['departure_airport'],
-            departure_code=row['departure_iata'],
-            arrival=row['arrival_airport'],
-            arrival_code=row['arrival_iata'],
-            departure_time=row['departure_actual'],
-            arrival_time=row['arrival_actual']
+            departure=departure_details.get('airport'),
+
+            departure_code=departure_details.get('iata'),
+
+            arrival=arrival_details.get('airport'),
+
+            arrival_code=arrival_details.get('iata'),
+
+            departure_time=datetime.fromisoformat(departure_details.get('scheduled')),
+            
+            arrival_time=datetime.fromisoformat(arrival_details.get('scheduled'))
         )
-        for _, row in df.iterrows()
-    ]
+        processed_flights.append(flight)
 
     return processed_flights
+

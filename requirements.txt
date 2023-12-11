@@ -2,3 +2,5 @@ pip
 requests
 requests-mock
 pytest
+pandas
+datetime

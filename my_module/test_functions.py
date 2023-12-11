@@ -1,15 +1,10 @@
 from my_module.functions import fetch_real_time_flights, process_flight_data
 import requests_mock
-import pytest
 from datetime import datetime
-import pandas as pd
 
 def test_fetch_and_process_specific_flight():
     """
-    Test fetching and processing data for a specific flight (UA2402).
-
-    This test uses requests_mock to simulate an API response with specific flight data.
-    It then checks if the function correctly processes this data.
+    Test fetching and processing data for a specific flight.
     """
     mock_response = {
         "data": [
@@ -28,19 +23,13 @@ def test_fetch_and_process_specific_flight():
                     "airport": "Los Angeles International",
                     "iata": "LAX",
                     "icao": "KLAX",
-                    "scheduled": "2019-12-11T23:30:00+00:00",
-                    "estimated": "2019-12-11T23:30:00+00:00",
-                    "actual": "2019-12-11T23:34:00+00:00",
-                    "runway": "2019-12-11T23:34:00+00:00"
+                    "scheduled": "2019-12-11T23:30:00+00:00"
                 },
                 "arrival": {
                     "airport": "Logan International",
                     "iata": "BOS",
                     "icao": "KBOS",
-                    "scheduled": "2019-12-12T07:54:00+00:00",
-                    "estimated": "2019-12-12T07:54:00+00:00",
-                    "actual": "2019-12-12T07:54:00+00:00",
-                    "runway": "2019-12-12T07:54:00+00:00"
+                    "scheduled": "2019-12-12T07:54:00+00:00"
                 },
                 "live": {
                     "is_ground": False
@@ -51,23 +40,17 @@ def test_fetch_and_process_specific_flight():
 
     with requests_mock.Mocker() as m:
         m.get("http://api.aviationstack.com/v1/flights", json=mock_response)
-        
-        # Fetch the flight data
-        flights_json = fetch_real_time_flights('1b72576d264f229fe85c9a9f8ddda862')
+        flights_data = fetch_real_time_flights('dummy_api_key')
+        processed_flights = process_flight_data(flights_data['data'])
 
-        # Process the flight data
-        processed_flights = process_flight_data(flights_json['data'])
-
-
-        # Assert that the processed data matches the expected output
-        assert len(processed_flights) == 0 or 1
+        assert len(processed_flights) == 1
         flight = processed_flights[0]
         assert flight.flight_number == "UA2402"
         assert flight.airline == "United Airlines"
         assert flight.departure == "Los Angeles International"
         assert flight.arrival == "Logan International"
-        assert flight.departure_time == datetime(2019, 12, 11, 23, 34)
-        assert flight.arrival_time == datetime(2019, 12, 12, 7, 54)
+        assert flight.departure_time == datetime.fromisoformat("2019-12-11T23:30:00+00:00")
+        assert flight.arrival_time == datetime.fromisoformat("2019-12-12T07:54:00+00:00")
 
 def test_fetch_real_time_flights_empty_response():
     """
@@ -75,10 +58,8 @@ def test_fetch_real_time_flights_empty_response():
     """
     with requests_mock.Mocker() as m:
         m.get("http://api.aviationstack.com/v1/flights", json={"data": []})
-        flights = fetch_real_time_flights('test_api_key')
-        
-        # Assert that the function returns an empty list
-        assert flights == []
+        flights_data = fetch_real_time_flights('dummy_api_key')
+        assert flights_data['data'] == []
 
 def test_process_flight_data_extraction():
     """
@@ -101,28 +82,20 @@ def test_process_flight_data_extraction():
                     "airport": "Los Angeles International",
                     "iata": "LAX",
                     "icao": "KLAX",
-                    "scheduled": "2019-12-11T23:30:00+00:00",
-                    "estimated": "2019-12-11T23:30:00+00:00",
-                    "actual": "2019-12-11T23:34:00+00:00",
-                    "runway": "2019-12-11T23:34:00+00:00"
+                    "scheduled": "2019-12-11T23:30:00+00:00"
                 },
                 "arrival": {
                     "airport": "Logan International",
                     "iata": "BOS",
                     "icao": "KBOS",
-                    "scheduled": "2019-12-12T07:54:00+00:00",
-                    "estimated": "2019-12-12T07:54:00+00:00",
-                    "actual": "2019-12-12T07:54:00+00:00",
-                    "runway": "2019-12-12T07:54:00+00:00"
+                    "scheduled": "2019-12-12T07:54:00+00:00"
                 }
             }
         ]
     }
 
     processed_data = process_flight_data(sample_api_response["data"])
-    
-    # Assert that the data is processed correctly
-    assert len(processed_data) == 0 or 1
+    assert len(processed_data) == 1
     flight = processed_data[0]
     assert flight.flight_number == "UA2402"
     assert flight.airline == "United Airlines"
@@ -150,28 +123,20 @@ def test_process_flight_data_datetime_conversion():
                     "airport": "JFK Airport",
                     "iata": "JFK",
                     "icao": "KJFK",
-                    "scheduled": "2023-12-09T12:30:00+00:00",
-                    "estimated": "2023-12-09T12:35:00+00:00",
-                    "actual": "2023-12-09T12:34:00+00:00",
-                    "runway": "2023-12-09T12:34:00+00:00"
+                    "scheduled": "2023-12-09T12:30:00+00:00"
                 },
                 "arrival": {
                     "airport": "Los Angeles International",
                     "iata": "LAX",
                     "icao": "KLAX",
-                    "scheduled": "2023-12-09T17:45:00+00:00",
-                    "estimated": "2023-12-09T17:45:00+00:00",
-                    "actual": "2023-12-09T17:45:00+00:00",
-                    "runway": "2023-12-09T17:45:00+00:00"
+                    "scheduled": "2023-12-09T17:45:00+00:00"
                 }
             }
         ]
     }
 
     processed_data = process_flight_data(sample_api_response["data"])
-
-    # Assert that the datetime strings are correctly converted to datetime objects
-    assert len(processed_data) == 0 or 1
+    assert len(processed_data) == 1
     flight = processed_data[0]
-    assert flight.departure_time == datetime(2023, 12, 9, 12, 34)
-    assert flight.arrival_time == datetime(2023, 12, 9, 17, 45)
+    assert flight.departure_time == datetime.fromisoformat("2023-12-09T12:30:00+00:00")
+    assert flight.arrival_time == datetime.fromisoformat("2023-12-09T17:45:00+00:00")
