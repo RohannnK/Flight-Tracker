@@ -33,7 +33,7 @@ class Flight:
         self.departure_time = departure_time
         self.arrival_time = arrival_time
 
-    def __str__(self):
+    def __repr__(self):
         """
         Returns a string representation of the flight.
         """

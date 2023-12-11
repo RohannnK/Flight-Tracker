@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/Users/rohankaman/Documents/GitHub/Flight-Tracker')
+
 from my_module.functions import fetch_real_time_flights, process_flight_data
 import requests_mock
 from datetime import datetime
@@ -6,42 +9,40 @@ def test_fetch_and_process_specific_flight():
     """
     Test fetching and processing data for a specific flight.
     """
-    mock_response = {
-        "data": [
-            {
-                "flight": {
-                    "iata": "UA2402",
-                    "icao": "UAL2402",
-                    "number": "2402"
-                },
-                "airline": {
-                    "name": "United Airlines",
-                    "iata": "UA",
-                    "icao": "UAL"
-                },
-                "departure": {
-                    "airport": "Los Angeles International",
-                    "iata": "LAX",
-                    "icao": "KLAX",
-                    "scheduled": "2019-12-11T23:30:00+00:00"
-                },
-                "arrival": {
-                    "airport": "Logan International",
-                    "iata": "BOS",
-                    "icao": "KBOS",
-                    "scheduled": "2019-12-12T07:54:00+00:00"
-                },
-                "live": {
-                    "is_ground": False
-                }
+    mock_response = [
+        {
+            "flight": {
+                "iata": "UA2402",
+                "icao": "UAL2402",
+                "number": "2402"
+            },
+            "airline": {
+                "name": "United Airlines",
+                "iata": "UA",
+                "icao": "UAL"
+            },
+            "departure": {
+                "airport": "Los Angeles International",
+                "iata": "LAX",
+                "icao": "KLAX",
+                "scheduled": "2019-12-11T23:30:00+00:00"
+            },
+            "arrival": {
+                "airport": "Logan International",
+                "iata": "BOS",
+                "icao": "KBOS",
+                "scheduled": "2019-12-12T07:54:00+00:00"
+            },
+            "live": {
+                "is_ground": False
             }
-        ]
-    }
+        }
+    ]
 
     with requests_mock.Mocker() as m:
         m.get("http://api.aviationstack.com/v1/flights", json=mock_response)
         flights_data = fetch_real_time_flights('dummy_api_key')
-        processed_flights = process_flight_data(flights_data['data'])
+        processed_flights = process_flight_data(flights_data)
 
         assert len(processed_flights) == 1
         flight = processed_flights[0]
@@ -57,9 +58,9 @@ def test_fetch_real_time_flights_empty_response():
     Test the behavior of the fetch_real_time_flights function when the API returns an empty response.
     """
     with requests_mock.Mocker() as m:
-        m.get("http://api.aviationstack.com/v1/flights", json={"data": []})
+        m.get("http://api.aviationstack.com/v1/flights", json=[])
         flights_data = fetch_real_time_flights('dummy_api_key')
-        assert flights_data['data'] == []
+        assert flights_data == []
 
 def test_process_flight_data_extraction():
     """
